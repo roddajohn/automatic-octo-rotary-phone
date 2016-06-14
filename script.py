@@ -202,7 +202,6 @@ def run(filename):
 
             if command[0] == "constants":
                 constants = command[1:]
-                print constants
 
             if command[0] == "save":
                 save_extension(screen, command[1])
@@ -302,4 +301,94 @@ def run(filename):
             fname = 'anim/%s%03d.png' % (name, f)
             print 'Drawing frame: ' + fname
             save_extension(screen, fname)
+
+def mesh_file(filename):
+    color = [255, 255, 255]
+
+    screen = new_screen()
+
+    vertices = [['blah', 'blah', 'blah']]
+
+    i = 0
+
+    max_x = 0
+    min_x = 0
+    max_y = 0
+    min_y = 0
+    max_z = 0
+    min_z = 0
+    
+    for line in open(filename).read().split('\n'):
+        if not line == '' and line.split(' ')[0] == 'v':
+            vertices.append([float(line.split(' ')[1]), float(line.split(' ')[2]), float(line.split(' ')[3])])
+
+            if float(line.split(' ')[1]) > max_x:
+                max_x = float(line.split(' ')[1])
+            if float(line.split(' ')[1]) < min_x:
+                min_x = float(line.split(' ')[1])
+            if float(line.split(' ')[2]) > max_y:
+                max_y = float(line.split(' ')[2])
+            if float(line.split(' ')[2]) < min_y:
+                min_y = float(line.split(' ')[2])
+            if float(line.split(' ')[3]) > max_z:
+                max_z = float(line.split(' ')[3])
+            if float(line.split(' ')[3]) < min_z:
+                min_z = float(line.split(' ')[3])
+                
+            i += 1
+
+    print max_x
+    print min_x
+    print max_y
+    print min_y
+    
+    x_scale_factor = XRES / (max_x - min_x + 2)
+    y_scale_factor = YRES / (max_y - min_y + 2)
+    
+    print x_scale_factor
+    print y_scale_factor
+    
+    scale_factor = 0.0
+    if x_scale_factor < y_scale_factor:
+        scale_factor = x_scale_factor
+    else:
+        scale_factor = y_scale_factor
+
+    m = []
+    for line in open(filename).read().split('\n'):
+        if not line == '' and line.split(' ')[0] == 'f':
+            add_polygon(m,
+                        vertices[int(line.split(' ')[1])][0] * scale_factor,
+                        vertices[int(line.split(' ')[1])][1] * scale_factor,
+                        vertices[int(line.split(' ')[1])][2] * scale_factor,
+                        vertices[int(line.split(' ')[2])][0] * scale_factor,
+                        vertices[int(line.split(' ')[2])][1] * scale_factor,
+                        vertices[int(line.split(' ')[2])][2] * scale_factor,
+                        vertices[int(line.split(' ')[3])][0] * scale_factor,
+                        vertices[int(line.split(' ')[3])][1] * scale_factor,
+                        vertices[int(line.split(' ')[3])][2] * scale_factor)
+
+    constants = [0.2, 0.2, 0.2, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4]
+    light_sources = [[10, 15, 1, 255, 0, 0]]
+
+
+    tmp = new_matrix()
+    ident( tmp )
+    stack = [tmp]
+    
+    t = make_translate(XRES / 2.5, YRES / 2.5, 0)
+    matrix_mult(stack[-1], t)
+    stack[-1] = t
+
+    matrix_mult(stack[-1], m)
+    
+    draw_polygons(m, screen, color, constants, light_sources)
+
+    display(screen)
+    save_ppm(screen, 'final_image.ppm')
+    save_extension(screen, 'final_image.png')
+            
+                                 
+                        
+            
             

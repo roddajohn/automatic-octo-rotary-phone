@@ -72,7 +72,7 @@ def get_color(color, light_sources, constants, normal, view):
         specular_light = [0, 0, 0]
     
         for x in range(3):
-            diffuse_light[x] = source[x+3] * constants[x+3] * dot_product(normalize(normal), normalize(s))
+            diffuse_light[x] = source[x + 3] * constants[x + 3] * dot_product(normalize(normal), normalize(s))
             
             temp = dot_product(normalize(s), normalize(normal))
             temp = scalar_product(normalize(normal), temp)
@@ -81,7 +81,7 @@ def get_color(color, light_sources, constants, normal, view):
             temp = dot_product(temp, view)
             angle = pow(temp,2)
             
-            specular_light[x] = source[x+3] * constants[x+6] * angle
+            specular_light[x] = source[x + 3] * constants[x+6] * angle
             specular_light[x] == 0
             
             if diffuse_light[x] > 0:
@@ -96,7 +96,7 @@ def get_color(color, light_sources, constants, normal, view):
         c = int(ambient[x]) + int(diffuse[x]) + int(specular[x])
                         
         if c < 0:
-            color_to_return[x] = c
+            color_to_return[x] = 0
         elif c > 255:
             color_to_return[x] = 255
         else:

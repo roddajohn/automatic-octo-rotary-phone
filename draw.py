@@ -10,28 +10,87 @@ def add_polygon( points, x0, y0, z0, x1, y1, z1, x2, y2, z2 ):
     add_point( points, x1, y1, z1 )
     add_point( points, x2, y2, z2 )
 
-def scanline_convert(screen, x_middle, y_middle, x_bottom, y_bottom, x_top, y_top, color):
-    increment = 0
-    while y_bottom + increment < y_top:
-        
-        d0 = float(x_top-x_bottom) / (y_top-y_bottom)
-        x_bottom0 = x_bottom + increment * d0
-        
-        if y_bottom + increment < y_middle:
-            d1 = float(x_middle-x_bottom)/(y_middle-y_bottom)
-            x_bottom1 = x_bottom + increment * d1
-            
-            draw_line(screen, x_bottom0, y_bottom + increment, x_bottom1, y_bottom + increment, color)
-            
-        else:
-            d1 = float(x_top-x_middle)/(y_top-y_middle)
-            x_middle1 = x_middle + (increment-y_middle + y_bottom) * d1
-            
-            draw_line(screen, x_bottom0, y_bottom + increment, x_middle1, y_bottom + increment, color)
-            
-        increment += 1
+def scanline_convert(screen, points, color):
+    sorted_points = sorted(points, key = lambda x : x[1])
+    x_top = int(sorted_points[2][0])
+    x_middle = int(sorted_points[1][0])
+    x_bottom = int(sorted_points[0][0])
+    y_top = int(sorted_points[2][1])
+    y_middle = int(sorted_points[1][1])
+    y_bottom = int(sorted_points[0][1])
+    z_bottom = int(sorted_points[0][2])
+    z_middle = int(sorted_points[1][2])
+    z_top = int(sorted_points[2][2])
 
-def order_points( points, p ):
+    if y_top != y_bottom:
+        delta_0 = float(x_top - x_bottom)/(y_top - y_bottom)
+        delta_z_0 = float(z_top - z_bottom)/(y_top - y_bottom)
+    else:
+        delta_0 = 1.0
+        delta_z_0 = 1.0
+        
+    y0 = y_bottom
+    x0 = x_bottom
+    x1 = x_bottom
+    z0 = z_bottom
+    z1 = z_bottom
+    
+    if y_middle == y_bottom:
+        x1 = x_middle
+        z1 = z_middle
+        
+    if y_middle != y_bottom:
+        delta_1_bottom = float(x_middle - x_bottom)/(y_middle-y_bottom)
+        delta_z_bottom = float(z_middle - z_bottom)/(y_middle-y_bottom)
+        
+    if y_top != y_middle:
+        delta_1_top = float(x_top - x_middle)/(y_top-y_middle)
+        delta_z_top = float(z_top - z_middle)/(y_top-y_middle)
+        
+    while(y0 < y_top):
+        if y0 < y_middle:
+            x1 += delta_1_bottom
+            z1 += delta_z_bottom
+        else:
+            x1 += delta_1_top
+            z1 += delta_z_top
+            
+        x0 += delta_0
+        z0 += delta_z_0
+        
+        if x1 > x0:
+            ztemp = (z1-z0) / (x1-x0)
+            for xval in range(int(x0), int(x1)):
+                plot(screen, color, xval, int(y0),z0+ ztemp * (xval - int(x0)))
+        elif x1 < x0:
+            ztemp = (z0-z1) / (x0-x1)
+            for xval in range(int(x1), int(x0)):
+                plot(screen, color, xval, int(y0), z1+ ztemp * (xval - int(x1)))
+                
+        y0 += 1
+        
+#    PREVIOUS VERSION -- DOESN'T WORK
+#    increment = 0
+#    while y_bottom + increment < y_top:
+#        
+#        d0 = float(x_top-x_bottom) / (y_top-y_bottom)
+#        x_bottom0 = x_bottom + increment * d0
+#        
+#        if y_bottom + increment < y_middle:
+#            d1 = float(x_middle-x_bottom)/(y_middle-y_bottom)
+#            x_bottom1 = x_bottom + increment * d1
+#            
+#            draw_line(screen, x_bottom0, y_bottom + increment, x_bottom1, y_bottom + increment, color)
+#            
+#        else:
+#            d1 = float(x_top-x_middle)/(y_top-y_middle)
+#            x_middle1 = x_middle + (increment-y_middle + y_bottom) * d1
+#            
+#            draw_line(screen, x_bottom0, y_bottom + increment, x_middle1, y_bottom + increment, color)
+#            
+#        increment += 1
+
+def sort_points( points, p ): # I used to use this function, then I found a better way (see above)
     x_middle = 0
     y_middle = 0
     x_top = 0
@@ -107,8 +166,7 @@ def draw_polygons( points, screen, color, constants, light_sources ):
 
     view = [0, 0, 1] # view vector
     
-    while p < len( points ) - 2:        
-        sorted_points = order_points(points, p)
+    while p < len( points ) - 2:        # middle bottom top
         # Call the scanline helper function on the polygon of the three vertices that we are currently dealing with.
         
         if calculate_dot( points, p ) < 0:
@@ -119,6 +177,10 @@ def draw_polygons( points, screen, color, constants, light_sources ):
                 points[p + 2][0] - points[p][0],
                 points[p + 2][1] - points[p][1],
                 points[p + 2][2] - points[p][2])), view)
+
+            scanline_convert(screen,
+                             points[p : p + 3],
+                             color)
             
 #            draw_line( screen, points[p][0], points[p][1],
 #                       points[p+1][0], points[p+1][1], color )
@@ -126,12 +188,6 @@ def draw_polygons( points, screen, color, constants, light_sources ):
 #                       points[p+2][0], points[p+2][1], color )
 #            draw_line( screen, points[p+2][0], points[p+2][1],
 #                       points[p][0], points[p][1], color )
-            scanline_convert(screen,
-                             sorted_points[0], sorted_points[1],
-                             sorted_points[2], sorted_points[3],
-                             sorted_points[4], sorted_points[5], color)
-
-        
 
         p += 3
 
@@ -395,7 +451,6 @@ def add_edge( matrix, x0, y0, z0, x1, y1, z1 ):
 
 def add_point( matrix, x, y, z=0 ):
     matrix.append( [x, y, z, 1] )
-
 
 def draw_line( screen, x0, y0, x1, y1, color ):
     dx = x1 - x0

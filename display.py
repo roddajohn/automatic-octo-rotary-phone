@@ -20,12 +20,24 @@ def new_screen( width = XRES, height = YRES ):
             screen[y].append( DEFAULT_COLOR[:] )
     return screen
 
-def plot( screen, color, x, y ):
+# I am lazy, and don't want to edit the passing of everthing -- hence, it is here!!
+z_buffer = [[-float('inf') for y in range(YRES)] for x in range(XRES)]
+def clear_buff():
+    global z_buffer
+    
+    z_buffer = [[-float('inf') for y in range(YRES)] for x in range(XRES)]
+
+def plot( screen, color, x, y,z ):
     x = int(x)
     y = int(y)
-    newy = YRES - 1 - y
-    if ( x >= 0 and x < XRES and newy >= 0 and newy < YRES ):
-        screen[x][newy] = color[:]
+    
+    new_y = YRES - 1 - y
+    
+    if ( x >= 0 and x < XRES and new_y >= 0 and new_y < YRES ):
+        if z > z_buffer[x][new_y]:
+            z_buffer[x][new_y] = z
+            
+            screen[x][new_y] = color[:]
 
 def clear_screen( screen ):
     for y in range( len(screen) ):

@@ -1,0 +1,5 @@
+Implemented Stuff:
+	    Scanline
+	    Z buffering
+	    Flat shading (I hope to get gouraud and phong working within the next couple of days)
+	    Mesh importing (from .obj files -- they were the simplest)
